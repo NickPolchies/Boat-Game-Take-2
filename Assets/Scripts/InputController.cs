@@ -28,18 +28,18 @@ public class InputController : MonoBehaviour
 
     public void Move(InputAction.CallbackContext context)
     {
-        charController.ForwardInput = context.ReadValue<Vector2>().y;
-        charController.TurnInput = context.ReadValue<Vector2>().x;
+        charController.MoveInput = context.ReadValue<Vector2>();
     }
 
     public void Look(InputAction.CallbackContext context)
     {
-        //TODO
+        charController.TurnInput += context.ReadValue<Vector2>();
     }
 
     public void Shoot(InputAction.CallbackContext context)
     {
         //TODO
+
     }
 
     public void Jump(InputAction.CallbackContext context)

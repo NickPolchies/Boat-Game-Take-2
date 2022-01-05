@@ -10,14 +10,17 @@ public class MainCharacterController : MonoBehaviour
     public float turnSpeed = 300f;
     public bool allowJump = true;
     public float jumpSpeed = 40f;
+    public float yLookSensitivity = 0.5f;
+    public float xLookSensitivity = 0.5f;
 
     public bool IsGrounded { get; private set; }
-    public float ForwardInput { get; set; }
-    public float TurnInput { get; set; }
+    public Vector2 MoveInput { get; set; }
+    public Vector2 TurnInput { get; set; }
     public bool JumpInput { get; set; }
 
     new private Rigidbody rigidbody;
     private CapsuleCollider capsuleCollider;
+    [SerializeField] private GameObject cameraAnchor;
 
     private void Awake()
     {
@@ -56,16 +59,25 @@ public class MainCharacterController : MonoBehaviour
 
     private void ProcessActions()
     {
-        if(TurnInput != 0f)
+        if(TurnInput != Vector2.zero)
         {
-            float angle = Mathf.Clamp(TurnInput, -1f, 1f) * turnSpeed;
-            transform.Rotate(Vector3.up, Time.fixedDeltaTime * angle);
+            transform.Rotate(Vector3.up, TurnInput.x * xLookSensitivity);
+
+            float yLook = cameraAnchor.transform.eulerAngles.x;
+            
+            Debug.Log(yLook + ", " + (yLook + TurnInput.y * yLookSensitivity));
+
+//            if(yLook + TurnInput.y < 89f)
+            {
+                cameraAnchor.transform.Rotate(Vector3.right, TurnInput.y * yLookSensitivity);
+            }
+            TurnInput = Vector2.zero;
         }
 
-        Vector3 move = transform.forward * Mathf.Clamp(ForwardInput, -1f, 1f) * moveSpeed * Time.fixedDeltaTime;
+        MoveInput.Normalize();
+        Vector3 move = transform.forward * MoveInput.y * moveSpeed * Time.fixedDeltaTime
+                     + transform.right * MoveInput.x * moveSpeed * Time.fixedDeltaTime;
         rigidbody.MovePosition(transform.position + move);
-
-        Debug.Log(JumpInput + ", " + allowJump + ", " + IsGrounded);
 
         if(JumpInput && allowJump && IsGrounded)
         {

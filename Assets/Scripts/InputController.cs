@@ -7,7 +7,7 @@ public class InputController : MonoBehaviour
 {
     private MainCharacterController charController;
     [SerializeField]
-    private InputActionAsset inputActions;
+    private CharacterController controller;
 
     private void Awake()
     {
@@ -38,8 +38,7 @@ public class InputController : MonoBehaviour
 
     public void Shoot(InputAction.CallbackContext context)
     {
-        //TODO
-
+        charController.ShootInput = context.ReadValue<float>() > 0 ? true : false;
     }
 
     public void Jump(InputAction.CallbackContext context)

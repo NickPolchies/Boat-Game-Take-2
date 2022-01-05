@@ -4,84 +4,56 @@ using UnityEngine;
 
 public class MainCharacterController : MonoBehaviour
 {
-    [Range(5f, 60f)]
-    public float slopeLimit = 45f;
-    public float moveSpeed = 2f;
-    public float turnSpeed = 300f;
-    public bool allowJump = true;
-    public float jumpSpeed = 40f;
-    public float yLookSensitivity = 0.5f;
-    public float xLookSensitivity = 0.5f;
+    public CharacterController controller;
+    public Transform cam;
 
-    public bool IsGrounded { get; private set; }
+
+    //Grounded code
+    public Transform groundCheck;
+    public float groundDistance;
+    public float jumpPower;
+    public LayerMask groundMask;
+    private bool isGrounded;
+
+    private Vector3 velocity;
+
+    public float gravity = -9.81f;
+    public float turnSmoothing = 0.1f;
+    private float turnSmoothVelocity;
+
     public Vector2 MoveInput { get; set; }
     public Vector2 TurnInput { get; set; }
     public bool JumpInput { get; set; }
+    public bool ShootInput { get; set; }
 
-    new private Rigidbody rigidbody;
-    private CapsuleCollider capsuleCollider;
-    [SerializeField] private GameObject cameraAnchor;
+    public float speed = 6f;
 
-    private void Awake()
+    private void Update()
     {
-        rigidbody = GetComponent<Rigidbody>();
-        capsuleCollider = GetComponent<CapsuleCollider>();
-    }
+        isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
 
-    private void FixedUpdate()
-    {
-        CheckGrounded();
-        ProcessActions();
-    }
-
-    private void CheckGrounded()
-    {
-        IsGrounded = false;
-        float capsuleHeight = Mathf.Max(capsuleCollider.radius * 2f, capsuleCollider.height);
-        Vector3 capsuleBottom = transform.TransformPoint(capsuleCollider.center - Vector3.up * capsuleHeight / 2f);
-        float radius = transform.TransformVector(capsuleCollider.radius, 0f, 0f).magnitude;
-
-        Ray ray = new Ray(capsuleBottom + transform.up * 0.01f, -transform.up);
-        RaycastHit hit;
-        if(Physics.Raycast(ray, out hit, radius * 5f))
+        if(isGrounded && velocity.y < 0)
         {
-            float normalAngle = Vector3.Angle(hit.normal, transform.up);
-            if(normalAngle < slopeLimit)
-            {
-                float maxDist = radius / Mathf.Cos(Mathf.Deg2Rad * normalAngle) - radius + 0.02f;
-                if(hit.distance < maxDist)
-                {
-                    IsGrounded = true;
-                }
-            }
-        }
-    }
-
-    private void ProcessActions()
-    {
-        if(TurnInput != Vector2.zero)
-        {
-            transform.Rotate(Vector3.up, TurnInput.x * xLookSensitivity);
-
-            float yLook = cameraAnchor.transform.eulerAngles.x;
-            
-            Debug.Log(yLook + ", " + (yLook + TurnInput.y * yLookSensitivity));
-
-//            if(yLook + TurnInput.y < 89f)
-            {
-                cameraAnchor.transform.Rotate(Vector3.right, TurnInput.y * yLookSensitivity);
-            }
-            TurnInput = Vector2.zero;
+            velocity.y = -2f;
         }
 
-        MoveInput.Normalize();
-        Vector3 move = transform.forward * MoveInput.y * moveSpeed * Time.fixedDeltaTime
-                     + transform.right * MoveInput.x * moveSpeed * Time.fixedDeltaTime;
-        rigidbody.MovePosition(transform.position + move);
+        velocity.y += gravity * Time.deltaTime;
 
-        if(JumpInput && allowJump && IsGrounded)
+        if(JumpInput && isGrounded)
         {
-            rigidbody.AddForce(transform.up * jumpSpeed, ForceMode.VelocityChange);
+            velocity.y = jumpPower;
         }
+
+        if(MoveInput.magnitude > 0.01)
+        {
+            float targetAngle = Mathf.Atan2(MoveInput.x, MoveInput.y) * Mathf.Rad2Deg + cam.eulerAngles.y;
+            float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothing);
+            transform.rotation = Quaternion.Euler(0f, angle, 0f);
+
+            Vector3 moveDir = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
+            controller.Move(moveDir.normalized * speed * Time.deltaTime);
+        }
+
+        controller.Move(velocity * Time.deltaTime);
     }
 }

@@ -29,9 +29,9 @@ public class WaveManager : MonoBehaviour
         offset += Time.deltaTime * speed;
     }
 
-    public float GetWaveHeight(float x, float y)
+    public float GetWaveHeight(float x, float z)
     {
         float offset = Time.time * speed;
-        return amplitude * Mathf.PerlinNoise(x * offset, y * offset);
+        return amplitude * Mathf.PerlinNoise((x + offset)*waveLength, (z + offset)*waveLength);
     }
 }

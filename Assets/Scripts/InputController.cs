@@ -6,8 +6,6 @@ using UnityEngine.InputSystem;
 public class InputController : MonoBehaviour
 {
     private MainCharacterController charController;
-    [SerializeField]
-    private CharacterController controller;
 
     private void Awake()
     {
